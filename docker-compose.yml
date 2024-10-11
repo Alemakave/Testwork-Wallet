@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  backend:
+    image: test:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - ${SPRING_PORT:-8085}:8080
+    depends_on:
+      - service-db
+    environment:
+      SERVER_PORT: ${SPRING_PORT:-8080}
+      SPRING_DATASOURCE_URL: ${SPRING_DATABASE_URL:-jdbc:postgresql://service-db/wallets}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATABASE_USERNAME:-root}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATABASE_PASSWORD:-paSSwoRd}
+  service-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-paSSwoRd}
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    restart: unless-stopped
+    volumes:
+      - ./db/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4:7
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASSWORD:-root}
+    ports:
+      - ${PG_ADMIN_PORT:-5454}:80
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+volumes:
+  pgadmin-data:
